@@ -1,0 +1,51 @@
+type CodeUpdated @entity(immutable: true) {
+  id: Bytes!
+  uuid: Bytes! # bytes32
+  codeAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FlowOperatorUpdated @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  sender: Bytes! # address
+  flowOperator: Bytes! # address
+  permissions: Int! # uint8
+  flowRateAllowance: BigInt! # int96
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FlowUpdated @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  sender: Bytes! # address
+  receiver: Bytes! # address
+  flowRate: BigInt! # int96
+  totalSenderFlowRate: BigInt! # int256
+  totalReceiverFlowRate: BigInt! # int256
+  userData: Bytes! # bytes
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FlowUpdatedExtension @entity(immutable: true) {
+  id: Bytes!
+  flowOperator: Bytes! # address
+  deposit: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Initialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
