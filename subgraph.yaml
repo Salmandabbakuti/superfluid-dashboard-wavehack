@@ -1,38 +1,29 @@
 specVersion: 1.0.0
+description: Subgraph for the Superfluid Dashboad
+repository: https://github.com/Salmandabbakuti/superfluid-dashboard-wavehack
 indexerHints:
   prune: auto
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: ConstantFlowAgreementV1
+    name: CFAV1
     network: sepolia
     source:
       address: "0x1f73832d4d4992ae0fcc181139e4bc88afb43694"
-      abi: ConstantFlowAgreementV1
+      abi: CFAV1
       startBlock: 5519198
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - CodeUpdated
-        - FlowOperatorUpdated
-        - FlowUpdated
-        - FlowUpdatedExtension
-        - Initialized
+        - Stream
+        - StreamRevision
       abis:
-        - name: ConstantFlowAgreementV1
-          file: ./abis/ConstantFlowAgreementV1.json
+        - name: CFAV1
+          file: ./abis/CFAV1.json
       eventHandlers:
-        - event: CodeUpdated(bytes32,address)
-          handler: handleCodeUpdated
-        - event: FlowOperatorUpdated(indexed address,indexed address,indexed address,uint8,int96)
-          handler: handleFlowOperatorUpdated
         - event: FlowUpdated(indexed address,indexed address,indexed address,int96,int256,int256,bytes)
           handler: handleFlowUpdated
-        - event: FlowUpdatedExtension(indexed address,uint256)
-          handler: handleFlowUpdatedExtension
-        - event: Initialized(uint8)
-          handler: handleInitialized
-      file: ./src/constant-flow-agreement-v-1.ts
+      file: ./src/mapping.ts
