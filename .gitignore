@@ -2,6 +2,19 @@
 build/
 generated/
 
+# Other files and folders
+.settings/
+artifacts/
+cache/
+.next/
+out/
+dist/
+.data/
+data/
+
+# testing
+/coverage
+
 # Dependency directories
 node_modules/
 jspm_packages/
@@ -21,6 +34,7 @@ yarn-error.log*
 
 # dotenv environment variables file
 .env
+*.env
 
 # Testing
 coverage
