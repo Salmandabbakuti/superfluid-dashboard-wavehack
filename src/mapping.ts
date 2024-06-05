@@ -1,95 +1,113 @@
 import {
-  CodeUpdated as CodeUpdatedEvent,
-  FlowOperatorUpdated as FlowOperatorUpdatedEvent,
-  FlowUpdated as FlowUpdatedEvent,
-  FlowUpdatedExtension as FlowUpdatedExtensionEvent,
-  Initialized as InitializedEvent
-} from "../generated/ConstantFlowAgreementV1/ConstantFlowAgreementV1"
-import {
-  CodeUpdated,
-  FlowOperatorUpdated,
-  FlowUpdated,
-  FlowUpdatedExtension,
-  Initialized
-} from "../generated/schema"
+  Address,
+  ethereum,
+  crypto,
+  Bytes,
+  BigInt
+} from "@graphprotocol/graph-ts";
+import { FlowUpdated as FlowUpdatedEvent } from "../generated/CFAV1/CFAV1";
+import { Stream, StreamRevision } from "../generated/schema";
 
-export function handleCodeUpdated(event: CodeUpdatedEvent): void {
-  let entity = new CodeUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.uuid = event.params.uuid
-  entity.codeAddress = event.params.codeAddress
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+function getStreamID(
+  senderAddress: Address,
+  receiverAddress: Address,
+  tokenAddress: Address,
+  revisionIndex: number
+): string {
+  return (
+    senderAddress.toHex() +
+    "-" +
+    receiverAddress.toHex() +
+    "-" +
+    tokenAddress.toHex() +
+    "-" +
+    revisionIndex.toString()
+  );
 }
 
-export function handleFlowOperatorUpdated(
-  event: FlowOperatorUpdatedEvent
-): void {
-  let entity = new FlowOperatorUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.token = event.params.token
-  entity.sender = event.params.sender
-  entity.flowOperator = event.params.flowOperator
-  entity.permissions = event.params.permissions
-  entity.flowRateAllowance = event.params.flowRateAllowance
+/**
+ * Take an array of ethereum values and return the encoded bytes.
+ * @param values
+ * @returns the encoded bytes
+ */
+export function encode(values: Array<ethereum.Value>): Bytes {
+  return ethereum.encode(
+    // forcefully cast Value[] -> Tuple
+    ethereum.Value.fromTuple(changetype<ethereum.Tuple>(values))
+  )!;
+}
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+// Get Higher Order Entity ID functions
+// CFA Higher Order Entity
+export function getStreamRevisionID(
+  senderAddress: Address,
+  receiverAddress: Address,
+  tokenAddress: Address
+): string {
+  const values: Array<ethereum.Value> = [
+    ethereum.Value.fromAddress(senderAddress),
+    ethereum.Value.fromAddress(receiverAddress)
+  ];
+  const flowId = crypto.keccak256(encode(values));
+  return flowId.toHex() + "-" + tokenAddress.toHex();
+}
+/**
+ * Gets or initializes the Stream Revision helper entity.
+ */
+export function getOrInitStreamRevision(
+  senderAddress: Address,
+  recipientAddress: Address,
+  tokenAddress: Address
+): StreamRevision {
+  const streamRevisionId = getStreamRevisionID(
+    senderAddress,
+    recipientAddress,
+    tokenAddress
+  );
+  let streamRevision = StreamRevision.load(streamRevisionId);
+  if (streamRevision == null) {
+    streamRevision = new StreamRevision(streamRevisionId);
+    streamRevision.revisionIndex = 0;
+    streamRevision.periodRevisionIndex = 0;
+  }
+  return streamRevision as StreamRevision;
 }
 
 export function handleFlowUpdated(event: FlowUpdatedEvent): void {
-  let entity = new FlowUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.token = event.params.token
-  entity.sender = event.params.sender
-  entity.receiver = event.params.receiver
-  entity.flowRate = event.params.flowRate
-  entity.totalSenderFlowRate = event.params.totalSenderFlowRate
-  entity.totalReceiverFlowRate = event.params.totalReceiverFlowRate
-  entity.userData = event.params.userData
+  const sender = event.params.sender;
+  const receiver = event.params.receiver;
+  const token = event.params.token;
+  const flowRate = event.params.flowRate;
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  // Create a streamRevision entity for this stream if one doesn't exist.
+  const streamRevision = getOrInitStreamRevision(sender, receiver, token);
+  const streamId = getStreamID(
+    sender,
+    receiver,
+    token,
+    streamRevision.revisionIndex
+  );
 
-  entity.save()
-}
+  // increment revision index if flowRate is 0 (flow is closed)
+  if (flowRate.equals(BigInt.fromI32(0))) {
+    streamRevision.revisionIndex = streamRevision.revisionIndex + 1;
+  }
+  // set stream id
+  streamRevision.mostRecentStream = streamId;
+  streamRevision.save();
 
-export function handleFlowUpdatedExtension(
-  event: FlowUpdatedExtensionEvent
-): void {
-  let entity = new FlowUpdatedExtension(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.flowOperator = event.params.flowOperator
-  entity.deposit = event.params.deposit
+  let stream = Stream.load(streamId);
+  const currentTimestamp = event.block.timestamp;
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
-export function handleInitialized(event: InitializedEvent): void {
-  let entity = new Initialized(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.version = event.params.version
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  if (stream == null) {
+    stream = new Stream(streamId);
+    stream.sender = sender.toHex();
+    stream.receiver = receiver.toHex();
+    stream.token = token.toHex();
+    stream.createdAt = currentTimestamp;
+    stream.txHash = event.transaction.hash.toHex();
+  }
+  stream.flowRate = flowRate;
+  stream.updatedAt = currentTimestamp;
+  stream.save();
 }
