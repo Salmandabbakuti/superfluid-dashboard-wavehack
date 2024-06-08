@@ -54,6 +54,8 @@ export default function Home() {
       filterObj.sender = account;
     } else if (type === "TERMINATED") {
       filterObj.flowRate = "0";
+    } else if (type === "ACTIVE") {
+      filterObj.flowRate_gt = "0";
     }
 
     const filters = [
@@ -233,11 +235,14 @@ export default function Home() {
           onChange={(val) => setSearchFilter({ ...searchFilter, type: val })}
         >
           <Select.Option value="">All</Select.Option>
-          <Select.Option value="INCOMING">
+          <Select.Option value="INCOMING" disabled={!account}>
             <Tag color="green">INCOMING</Tag>
           </Select.Option>
-          <Select.Option value="OUTGOING">
+          <Select.Option value="OUTGOING" disabled={!account}>
             <Tag color="blue">OUTGOING</Tag>
+          </Select.Option>
+          <Select.Option value="ACTIVE">
+            <Tag color="blue">ACTIVE</Tag>
           </Select.Option>
           <Select.Option value="TERMINATED">
             <Tag color="red">TERMINATED</Tag>
@@ -268,7 +273,9 @@ export default function Home() {
           onChange={(val) => setShowMyStreams(val === "me")}
         >
           <Select.Option value="all">All</Select.Option>
-          <Select.Option value="me">Me</Select.Option>
+          <Select.Option value="me" disabled={!account}
+            title={account ? "" : "Connect your wallet to view"}
+          >Me</Select.Option>
         </Select>
       </Space>
       <Table
