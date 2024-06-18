@@ -4,7 +4,7 @@ type Stream @entity {
   receiver: String!
   token: String!
   flowRate: BigInt!
-  txHash: String!
+  activities: [StreamActivity!]! @derivedFrom(field: "stream")
   createdAt: BigInt!
   updatedAt: BigInt!
 }
@@ -14,4 +14,19 @@ type StreamRevision @entity {
   revisionIndex: Int!
   periodRevisionIndex: Int!
   mostRecentStream: Stream!
+}
+
+enum StreamActivityType {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+type StreamActivity @entity(immutable: true) {
+  id: ID!
+  type: StreamActivityType!
+  stream: Stream!
+  flowRate: BigInt!
+  txHash: String!
+  timestamp: BigInt!
 }
