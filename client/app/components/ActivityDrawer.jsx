@@ -7,7 +7,9 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import {
   STREAM_ACTIVITIES_QUERY,
   subgraphClient as client,
-  supportedTokens
+  supportedTokens,
+  calculateFlowRateInTokenPerMonth,
+  ellipsisAddress
 } from "@/app/utils/index.js";
 import { explorerUrl } from "../utils/constants";
 
@@ -21,6 +23,7 @@ export default function ActivityDrawer() {
 
   const getActivities = async () => {
     console.log("Getting activities...");
+    console.log("account: ", account);
     client
       .request(STREAM_ACTIVITIES_QUERY, {
         skip: 0,
@@ -45,7 +48,7 @@ export default function ActivityDrawer() {
 
   useEffect(() => {
     getActivities();
-  }, []);
+  }, [account]);
 
   return (
     <>
@@ -65,8 +68,15 @@ export default function ActivityDrawer() {
       >
         {activities.length > 0 ? (
           <List
+            size="small"
             itemLayout="horizontal"
             dataSource={activities}
+            pagination={{
+              size: "small",
+              position: "bottom",
+              align: "center",
+              pageSize: 10
+            }}
             renderItem={(item) => {
               const tokenData = supportedTokens.find(
                 (oneToken) => oneToken.address === item?.stream?.token
@@ -74,16 +84,49 @@ export default function ActivityDrawer() {
                 icon: "",
                 symbol: "Unknown"
               };
+
+              const flowRatePerMonth = calculateFlowRateInTokenPerMonth(
+                item?.flowRate
+              );
+
+              let title = "";
+              switch (item.type) {
+                case "CREATE":
+                  title = "Stream Created";
+                  break;
+                case "UPDATE":
+                  title = "Stream Updated";
+                  break;
+                case "DELETE":
+                  title = "Stream Deleted";
+                  break;
+                default:
+                  title = "Unknown Activity";
+              }
+
+              let description = "";
+              if (item?.flowRate > 0) {
+                description = `${flowRatePerMonth} ${
+                  tokenData?.symbol
+                }/mo sent from ${ellipsisAddress(
+                  item?.stream?.sender
+                )} to ${ellipsisAddress(item?.stream?.receiver)}`;
+              } else {
+                description = `Stream from ${ellipsisAddress(
+                  item?.stream?.sender
+                )} to ${ellipsisAddress(
+                  item?.stream?.receiver
+                )} has been deleted`;
+              }
+
               return (
-                <List.Item>
+                <List.Item key={item?.id}>
                   <List.Item.Meta
                     avatar={<Avatar src={tokenData?.icon} />}
-                    title={item?.type}
-                    description={item?.flowRate}
+                    title={title}
+                    description={description}
                   />
-                  {/* add timestamp */}
                   <div>{dayjs(item?.timestamp * 1000).fromNow()}</div>
-                  {/* external link */}
                   <Button
                     icon={<ExportOutlined />}
                     type="link"
