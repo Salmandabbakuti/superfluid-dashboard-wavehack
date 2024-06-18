@@ -21,7 +21,7 @@ export default function ActivityDrawer() {
   const [showMyActivities, setShowMyActivities] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const account = useAddress();
+  const account = useAddress()?.toLowerCase();
 
   const getActivities = async () => {
     console.log("Getting activities...");
@@ -133,7 +133,7 @@ export default function ActivityDrawer() {
             if (item?.flowRate > 0) {
               description = `${flowRatePerMonth} ${
                 tokenData?.symbol
-              }/mo sent from ${ellipsisAddress(
+              }/mo opened from ${ellipsisAddress(
                 item?.stream?.sender
               )} to ${ellipsisAddress(item?.stream?.receiver)}`;
             } else {
