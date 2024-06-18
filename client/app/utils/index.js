@@ -56,7 +56,7 @@ export const supportedTokens = [
   }
 ];
 
-export const ellipsisAddress = (address) => address.slice(0, 6) + "..." + address.slice(-4);
+export const ellipsisAddress = (address) => address.slice(0, 4) + "..." + address.slice(-2);
 
 export const calculateFlowRateInTokenPerMonth = (amount) => {
   if (isNaN(amount)) return 0;
@@ -132,4 +132,4 @@ export const STREAM_ACTIVITIES_QUERY = gql`
   }
 `;
 
-export const subgraphClient = new GraphQLClient(subgraphUrl, { headers: {} });
+export const subgraphClient = new GraphQLClient(subgraphUrl);
