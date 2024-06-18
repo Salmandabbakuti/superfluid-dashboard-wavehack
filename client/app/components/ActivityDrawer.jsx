@@ -123,7 +123,7 @@ export default function ActivityDrawer() {
                 title = "Stream Updated";
                 break;
               case "DELETE":
-                title = "Stream Deleted";
+                title = "Stream Cancelled";
                 break;
               default:
                 title = "Unknown Activity";
@@ -141,7 +141,7 @@ export default function ActivityDrawer() {
                 item?.stream?.sender
               )} to ${ellipsisAddress(
                 item?.stream?.receiver
-              )} has been deleted`;
+              )} has been cancelled`;
             }
 
             return (
