@@ -6,7 +6,7 @@ import {
   BigInt
 } from "@graphprotocol/graph-ts";
 import { FlowUpdated as FlowUpdatedEvent } from "../generated/CFAV1/CFAV1";
-import { Stream, StreamRevision } from "../generated/schema";
+import { Stream, StreamRevision, StreamActivity } from "../generated/schema";
 
 function getStreamID(
   senderAddress: Address,
@@ -99,13 +99,36 @@ export function handleFlowUpdated(event: FlowUpdatedEvent): void {
   let stream = Stream.load(streamId);
   const currentTimestamp = event.block.timestamp;
 
+  // determine if this is a new stream or an update,delete
+  const streamActivityType =
+    stream === null
+      ? "CREATE"
+      : flowRate.equals(BigInt.fromI32(0))
+      ? "DELETE"
+      : "UPDATE";
+
+  // create new stream activity
+  const streamActivityId =
+    streamId +
+    "-" +
+    event.transaction.hash.toHex() +
+    "-" +
+    event.logIndex.toString();
+
+  let streamActivity = new StreamActivity(streamActivityId);
+  streamActivity.stream = streamId;
+  streamActivity.type = streamActivityType;
+  streamActivity.flowRate = flowRate;
+  streamActivity.txHash = event.transaction.hash.toHex();
+  streamActivity.timestamp = currentTimestamp;
+  streamActivity.save();
+
   if (stream == null) {
     stream = new Stream(streamId);
     stream.sender = sender.toHex();
     stream.receiver = receiver.toHex();
     stream.token = token.toHex();
     stream.createdAt = currentTimestamp;
-    stream.txHash = event.transaction.hash.toHex();
   }
   stream.flowRate = flowRate;
   stream.updatedAt = currentTimestamp;

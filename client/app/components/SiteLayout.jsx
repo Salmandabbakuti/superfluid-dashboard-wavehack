@@ -1,6 +1,7 @@
 "use client";
 import { Divider, Layout } from "antd";
 import { ConnectWallet } from "@thirdweb-dev/react";
+import ActivityDrawer from "./ActivityDrawer";
 import "antd/dist/reset.css";
 
 const { Header, Footer, Content } = Layout;
@@ -30,15 +31,18 @@ export default function SiteLayout({ children }) {
         >
           Superfluid Dashboard
         </h3>
-        <ConnectWallet
-          style={{ marginRight: "10px" }}
-          theme={"dark"} // light | dark
-          switchToActiveChain={true}
-          hideTestnetFaucet={false}
-          modalSize={"compact"} // compact | wide
-          termsOfServiceUrl="https://example.com/terms"
-          privacyPolicyUrl="https://example.com/privacy"
-        />
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <ConnectWallet
+            style={{ marginRight: "10px" }}
+            theme={"light"} // light | dark
+            switchToActiveChain={true}
+            hideTestnetFaucet={false}
+            modalSize={"compact"} // compact | wide
+            termsOfServiceUrl="https://example.com/terms"
+            privacyPolicyUrl="https://example.com/privacy"
+          />
+          <ActivityDrawer />
+        </div>
       </Header>
 
       <Content
