@@ -11,9 +11,12 @@ import {
   Space,
   Table,
   Tag,
-  Select
+  Select,
+  Popover,
+  List,
+  Divider
 } from "antd";
-import { SyncOutlined } from "@ant-design/icons";
+import { SyncOutlined, HistoryOutlined } from "@ant-design/icons";
 
 import {
   supportedTokens,
@@ -60,14 +63,20 @@ export default function Home() {
 
     const filters = [
       filterObj,
-      ...(showMyStreams ? [{ or: [{ sender: account }, { receiver: account }] }] : []),
-      ...(searchInput ? [{
-        or: [
-          { sender_contains_nocase: searchInput },
-          { receiver_contains_nocase: searchInput },
-          { token_contains_nocase: searchInput }
+      ...(showMyStreams
+        ? [{ or: [{ sender: account }, { receiver: account }] }]
+        : []),
+      ...(searchInput
+        ? [
+          {
+            or: [
+              { sender_contains_nocase: searchInput },
+              { receiver_contains_nocase: searchInput },
+              { token_contains_nocase: searchInput }
+            ]
+          }
         ]
-      }] : [])
+        : [])
     ];
 
     client
@@ -190,7 +199,122 @@ export default function Home() {
       title: "Remarks",
       width: "5%",
       render: (row) => (
-        <>
+        <Space>
+          <Popover
+            title={
+              <>
+                <strong>Stream Activity</strong>
+                <Divider plain />
+              </>
+            }
+            trigger="click"
+            placement="left"
+            overlayStyle={{ width: 380 }}
+            arrow={{ pointAtCenter: true }}
+            content={() => {
+              const tokenData = supportedTokens.find(
+                (oneToken) => oneToken.address === row.token
+              ) || {
+                icon: "",
+                symbol: "Unknown"
+              };
+              return (
+                <List
+                  split={false}
+                  header={
+                    <Space direction="vertical" size={"small"}>
+                      {/* show sender, receiver, token with links */}
+                      <p>
+                        <strong>Sender:</strong>{" "}
+                        <a
+                          href={`${explorerUrl}/address/${row?.sender}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {row?.sender?.slice(0, 8) + "..." + row?.sender?.slice(-8)}
+                        </a>
+                      </p>
+                      <p>
+                        <strong>Receiver:</strong>{" "}
+                        <a
+                          href={`${explorerUrl}/address/${row?.receiver}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {row?.receiver?.slice(0, 8) + "..." + row?.receiver?.slice(-8)}
+                        </a>
+                      </p>
+                      <p>
+                        <strong>Token:</strong>{" "}
+                        <a
+                          href={`${explorerUrl}/token/${row?.token}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Avatar shape="circle" size="small" src={tokenData?.icon} />{" "}
+                          {tokenData?.symbol}
+                        </a>
+                      </p>
+                    </Space>
+                  }
+                  size="large"
+                  itemLayout="horizontal"
+                  dataSource={row?.activities}
+                  renderItem={(activity) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        title={
+                          <>
+                            <Divider plain>{dayjs(activity?.timestamp * 1000).format(
+                              "MMM D, YYYY"
+                            )}</Divider>
+                            <Tag
+                              color={
+                                activity?.type === "CREATE"
+                                  ? "blue"
+                                  : activity?.type === "UPDATE"
+                                    ? "yellow"
+                                    : activity?.type === "DELETE"
+                                      ? "red"
+                                      : "default"
+                              }
+                            >
+                              {activity?.type?.toUpperCase()}
+                            </Tag>
+                          </>
+                        }
+                        description={
+                          <>
+                            <p>
+                              <strong>Transaction Hash: </strong>
+                              <a
+                                href={`${explorerUrl}/tx/${activity?.txHash}`}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {activity?.txHash?.slice(0, 8) + "..." + activity?.txHash?.slice(-8)}
+                              </a>
+                            </p>
+                            <p>
+                              <strong>Flow Rate: </strong> {activity?.flowRate}
+                            </p>
+                            <p>
+                              <strong>Timestamp: </strong>
+                              {dayjs(activity?.timestamp * 1000).format(
+                                "h:mm A MMM D, YYYY"
+                              )}
+                            </p>
+                          </>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              );
+            }}
+          >
+            <Button icon={<HistoryOutlined />} type="text" shape="circle" />
+          </Popover>
           {showMyStreams ? (
             <Space>
               <Tag color={row.sender === account ? "blue" : "green"}>
@@ -203,7 +327,7 @@ export default function Home() {
               {row.flowRate === "0" ? "TERMINATED" : "ACTIVE"}
             </Tag>
           )}
-        </>
+        </Space>
       )
     }
   ];
@@ -273,9 +397,13 @@ export default function Home() {
           onChange={(val) => setShowMyStreams(val === "me")}
         >
           <Select.Option value="all">All</Select.Option>
-          <Select.Option value="me" disabled={!account}
+          <Select.Option
+            value="me"
+            disabled={!account}
             title={account ? "" : "Connect your wallet to view"}
-          >Me</Select.Option>
+          >
+            Me
+          </Select.Option>
         </Select>
       </Space>
       <Table
