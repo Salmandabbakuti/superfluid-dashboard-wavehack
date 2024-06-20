@@ -56,7 +56,8 @@ export const supportedTokens = [
   }
 ];
 
-export const ellipsisAddress = (address) => address.slice(0, 4) + "..." + address.slice(-2);
+export const ellipsisAddress = (address) =>
+  address.slice(0, 4) + "..." + address.slice(-2);
 
 export const calculateFlowRateInTokenPerMonth = (amount) => {
   if (isNaN(amount)) return 0;
@@ -74,6 +75,11 @@ export const STREAMS_QUERY = gql`
     $orderBy: Stream_orderBy
     $orderDirection: OrderDirection
     $where: Stream_filter
+    $activities_skip: Int
+    $activities_first: Int
+    $activities_orderBy: StreamActivity_orderBy
+    $activities_orderDirection: OrderDirection
+    $activities_where: StreamActivity_filter
   ) {
     streams(
       skip: $skip
@@ -86,7 +92,13 @@ export const STREAMS_QUERY = gql`
       sender
       receiver
       token
-      activities {
+      activities(
+        skip: $activities_skip
+        first: $activities_first
+        orderBy: $activities_orderBy
+        orderDirection: $activities_orderDirection
+        where: $activities_where
+      ) {
         id
         type
         flowRate

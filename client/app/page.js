@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, act } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useAddress } from "@thirdweb-dev/react";
@@ -85,6 +85,10 @@ export default function Home() {
         first: 100,
         orderBy: "createdAt",
         orderDirection: "desc",
+        activites_skip: 0,
+        activites_first: 20,
+        activities_orderBy: "timestamp",
+        activities_orderDirection: "desc",
         where: {
           and: filters
         }
