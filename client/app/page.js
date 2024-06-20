@@ -296,7 +296,7 @@ export default function Home() {
                               </a>
                             </p>
                             <p>
-                              <strong>Flow Rate: </strong> {activity?.flowRate}
+                              <strong>Flow Rate: </strong> {calculateFlowRateInTokenPerMonth(activity?.flowRate)} {tokenData?.symbol}/mo
                             </p>
                             <p>
                               <strong>Timestamp: </strong>
