@@ -126,7 +126,7 @@ export default function Home() {
         };
         return (
           <>
-            <Avatar shape="circle" size="default" src={tokenData.icon} />
+            <Avatar shape="circle" size="small" src={tokenData.icon} />
             <a
               href={`${explorerUrl}/token/${token}`}
               target="_blank"
@@ -389,7 +389,11 @@ export default function Home() {
             })
           }
         />
-        <Button type="primary" onClick={getStreams}>
+        <Button
+          type="primary"
+          shape="circle"
+          onClick={getStreams}
+        >
           <SyncOutlined />
         </Button>
         {/* switch to show all or by me */}

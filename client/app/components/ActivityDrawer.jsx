@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
-import { Drawer, Button, message, Avatar, List, Empty, Select } from "antd";
+import { Drawer, Button, message, Avatar, List, Select } from "antd";
 import { useAddress } from "@thirdweb-dev/react";
-import { HistoryOutlined, ExportOutlined } from "@ant-design/icons";
+import {
+  HistoryOutlined,
+  ExportOutlined,
+  SyncOutlined
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
@@ -32,7 +36,7 @@ export default function ActivityDrawer() {
     client
       .request(STREAM_ACTIVITIES_QUERY, {
         skip: 0,
-        first: 30,
+        first: 100,
         orderBy: "timestamp",
         orderDirection: "desc",
         where: {
@@ -85,6 +89,13 @@ export default function ActivityDrawer() {
             Me
           </Select.Option>
         </Select>
+        <Button
+          type="primary"
+          shape="circle"
+          style={{ marginLeft: 10 }}
+          onClick={getActivities}
+          icon={<SyncOutlined spin={loading} />}
+        />
         <List
           size="small"
           itemLayout="horizontal"
@@ -147,7 +158,7 @@ export default function ActivityDrawer() {
             return (
               <List.Item key={item?.id}>
                 <List.Item.Meta
-                  avatar={<Avatar src={tokenData?.icon} size="default" />}
+                  avatar={<Avatar src={tokenData?.icon} size="small" />}
                   title={title}
                   description={description}
                 />
