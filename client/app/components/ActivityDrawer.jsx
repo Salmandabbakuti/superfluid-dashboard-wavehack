@@ -148,7 +148,7 @@ export default function ActivityDrawer() {
                 item?.stream?.sender
               )} to ${ellipsisAddress(item?.stream?.receiver)}`;
             } else if (item.type === "UPDATE") {
-              `Stream from ${ellipsisAddress(
+              description = `Stream from ${ellipsisAddress(
                 item?.stream?.sender
               )} to ${ellipsisAddress(
                 item?.stream?.receiver
