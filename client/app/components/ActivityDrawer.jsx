@@ -141,12 +141,18 @@ export default function ActivityDrawer() {
             }
 
             let description = "";
-            if (item?.flowRate > 0) {
+            if (item?.type === "CREATE") {
               description = `${flowRatePerMonth} ${
                 tokenData?.symbol
               }/mo opened from ${ellipsisAddress(
                 item?.stream?.sender
               )} to ${ellipsisAddress(item?.stream?.receiver)}`;
+            } else if (item.type === "UPDATE") {
+              `Stream from ${ellipsisAddress(
+                item?.stream?.sender
+              )} to ${ellipsisAddress(
+                item?.stream?.receiver
+              )} is updated to ${flowRatePerMonth}`;
             } else {
               description = `Stream from ${ellipsisAddress(
                 item?.stream?.sender
