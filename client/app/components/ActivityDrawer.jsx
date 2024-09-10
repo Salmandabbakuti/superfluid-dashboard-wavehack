@@ -126,39 +126,37 @@ export default function ActivityDrawer() {
                 : parseInt(flowRateInTokenPerMonth).toFixed(2);
 
             let title = "";
+            let description = "";
             switch (item.type) {
               case "CREATE":
                 title = "Stream Created";
+                description = `${flowRatePerMonth} ${
+                  tokenData?.symbol
+                }/mo stream opened from ${ellipsisAddress(
+                  item?.stream?.sender
+                )} to ${ellipsisAddress(item?.stream?.receiver)}`;
                 break;
               case "UPDATE":
                 title = "Stream Updated";
+                description = `${
+                  tokenData?.symbol
+                } Stream from ${ellipsisAddress(
+                  item?.stream?.sender
+                )} to ${ellipsisAddress(
+                  item?.stream?.receiver
+                )} is updated to ${flowRatePerMonth} ${tokenData?.symbol}/mo`;
                 break;
               case "DELETE":
                 title = "Stream Cancelled";
+                description = `${
+                  tokenData?.symbol
+                } Stream from ${ellipsisAddress(
+                  item?.stream?.sender
+                )} to ${ellipsisAddress(item?.stream?.receiver)} is cancelled`;
                 break;
               default:
                 title = "Unknown Activity";
-            }
-
-            let description = "";
-            if (item?.type === "CREATE") {
-              description = `${flowRatePerMonth} ${
-                tokenData?.symbol
-              }/mo opened from ${ellipsisAddress(
-                item?.stream?.sender
-              )} to ${ellipsisAddress(item?.stream?.receiver)}`;
-            } else if (item.type === "UPDATE") {
-              description = `Stream from ${ellipsisAddress(
-                item?.stream?.sender
-              )} to ${ellipsisAddress(
-                item?.stream?.receiver
-              )} is updated to ${flowRatePerMonth}`;
-            } else {
-              description = `Stream from ${ellipsisAddress(
-                item?.stream?.sender
-              )} to ${ellipsisAddress(
-                item?.stream?.receiver
-              )} has been cancelled`;
+                description = "No information available";
             }
 
             return (
