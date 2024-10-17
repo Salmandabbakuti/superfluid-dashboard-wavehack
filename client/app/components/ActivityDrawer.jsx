@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import updateLocale from "dayjs/plugin/updateLocale";
 import {
   STREAM_ACTIVITIES_QUERY,
   subgraphClient as client,
@@ -18,6 +19,25 @@ import {
 import { explorerUrl } from "../utils/constants";
 
 dayjs.extend(relativeTime);
+dayjs.extend(updateLocale);
+
+dayjs.updateLocale("en", {
+  relativeTime: {
+    future: "in %s",
+    past: "%s",
+    s: "now",
+    m: "1min",
+    mm: "%dmin",
+    h: "1hr",
+    hh: "%dhr",
+    d: "1d",
+    dd: "%dd",
+    M: "1mo",
+    MM: "%dmo",
+    y: "1yr",
+    yy: "%dyr"
+  }
+});
 
 export default function ActivityDrawer() {
   const [activities, setActivities] = useState([]);
