@@ -1,6 +1,6 @@
 
 // SEPOLIA TESTNET
-export const subgraphUrl = "https://api.studio.thegraph.com/proxy/15343/superfluid-dashboard-sepolia/version/latest/";
+export const subgraphUrl = "https://api.studio.thegraph.com/query/15343/superfluid-dashboard-sepolia/version/latest/";
 export const explorerUrl = "https://sepolia.etherscan.io";
 
 // sf protocol super tokens on sepolia
