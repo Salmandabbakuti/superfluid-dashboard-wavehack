@@ -26,8 +26,8 @@ dayjs.updateLocale("en", {
     future: "in %s",
     past: "%s",
     s: "now",
-    m: "1min",
-    mm: "%dmin",
+    m: "1m",
+    mm: "%dm",
     h: "1hr",
     hh: "%dhr",
     d: "1d",
@@ -141,9 +141,9 @@ export default function ActivityDrawer() {
 
             // if flowRateInTokenPerMonth is less than 0.01, show <0.01 else show the value with 2 decimal places
             const flowRatePerMonth =
-              parseInt(flowRateInTokenPerMonth) < 0.01
+              parseFloat(flowRateInTokenPerMonth) < 0.01
                 ? "<0.01"
-                : parseInt(flowRateInTokenPerMonth).toFixed(2);
+                : parseFloat(flowRateInTokenPerMonth).toFixed(2);
 
             let title = "";
             let description = "";
