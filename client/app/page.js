@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useCallback, act } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useAddress } from "@thirdweb-dev/react";
 import {
   Avatar,
   Button,
@@ -32,47 +32,42 @@ dayjs.extend(relativeTime);
 export default function Home() {
   const [streams, setStreams] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
-  const [showMyStreams, setShowMyStreams] = useState(false);
-  const [searchFilter, setSearchFilter] = useState({
-    type: "",
-    token: "",
-    searchInput: ""
-  });
-  const address = useAddress();
-  const account = address?.toLowerCase();
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const searchQueryParam = searchParams.get("q") || "";
+  const tokenQueryParam = searchParams.get("token") || "";
+  const typeQueryParam = searchParams.get("type") || "";
+  const viewAsQueryParam = searchParams.get("view_as") || "";
 
   const getStreams = useCallback(() => {
-    if (showMyStreams && !account) {
-      return message.error("Please connect your wallet to view your streams.");
-    }
     setDataLoading(true);
 
     // Update search filters based on type
-    const { type, token, searchInput } = searchFilter;
     const filterObj = {};
-    if (token) filterObj.token = token;
-    if (type === "INCOMING") {
-      filterObj.receiver = account;
-    } else if (type === "OUTGOING") {
-      filterObj.sender = account;
-    } else if (type === "TERMINATED") {
+    if (tokenQueryParam) filterObj.token = tokenQueryParam;
+    if (typeQueryParam === "INCOMING") {
+      filterObj.receiver = viewAsQueryParam?.toLowerCase();
+    } else if (typeQueryParam === "OUTGOING") {
+      filterObj.sender = viewAsQueryParam?.toLowerCase();
+    } else if (typeQueryParam === "TERMINATED") {
       filterObj.flowRate = "0";
-    } else if (type === "ACTIVE") {
+    } else if (typeQueryParam === "ACTIVE") {
       filterObj.flowRate_gt = "0";
     }
 
     const filters = [
       filterObj,
-      ...(showMyStreams
-        ? [{ or: [{ sender: account }, { receiver: account }] }]
+      ...(viewAsQueryParam
+        ? [{ or: [{ sender: viewAsQueryParam?.toLowerCase() }, { receiver: viewAsQueryParam?.toLowerCase() }] }]
         : []),
-      ...(searchInput
+      ...(searchQueryParam
         ? [
           {
             or: [
-              { sender_contains_nocase: searchInput },
-              { receiver_contains_nocase: searchInput },
-              { token_contains_nocase: searchInput }
+              { sender_contains_nocase: searchQueryParam },
+              { receiver_contains_nocase: searchQueryParam },
+              { token_contains_nocase: searchQueryParam }
             ]
           }
         ]
@@ -103,14 +98,14 @@ export default function Home() {
         message.error("Something went wrong. Is the Subgraph running?");
         console.error("failed to get streams: ", err);
       });
-  }, [account, showMyStreams, searchFilter]);
+  }, [searchQueryParam, tokenQueryParam, typeQueryParam, viewAsQueryParam]);
 
   useEffect(() => {
     getStreams();
     // Sync streams every 30 seconds
     const intervalId = setInterval(getStreams, 30000);
     return () => clearInterval(intervalId);
-  }, [account, showMyStreams, getStreams]);
+  }, [getStreams]);
 
   const columns = [
     {
@@ -150,7 +145,7 @@ export default function Home() {
           target="_blank"
           rel="noreferrer"
         >
-          {sender === account ? `${sender} (You)` : sender}
+          {sender === viewAsQueryParam?.toLowerCase() ? `${sender} (You)` : sender}
         </a>
       )
     },
@@ -165,7 +160,7 @@ export default function Home() {
           target="_blank"
           rel="noreferrer"
         >
-          {receiver === account ? `${receiver} (You)` : receiver}
+          {receiver === viewAsQueryParam?.toLowerCase() ? `${receiver} (You)` : receiver}
         </a>
       )
     },
@@ -319,10 +314,10 @@ export default function Home() {
           >
             <Button icon={<HistoryOutlined />} type="text" shape="circle" />
           </Popover>
-          {showMyStreams ? (
+          {viewAsQueryParam ? (
             <Space>
-              <Tag color={row.sender === account ? "blue" : "green"}>
-                {row.sender === account ? "OUTGOING" : "INCOMING"}
+              <Tag color={row.sender === viewAsQueryParam?.toLowerCase() ? "blue" : "green"}>
+                {row.sender === viewAsQueryParam?.toLowerCase() ? "OUTGOING" : "INCOMING"}
               </Tag>
               {row.flowRate === "0" && <Tag color="red">TERMINATED</Tag>}
             </Space>
@@ -344,8 +339,13 @@ export default function Home() {
         <Select
           defaultValue=""
           style={{ width: 120 }}
-          value={searchFilter?.token || ""}
-          onChange={(val) => setSearchFilter({ ...searchFilter, token: val })}
+          value={tokenQueryParam}
+          onChange={(val) => {
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            if (val) urlSearchParams.set("token", val);
+            else urlSearchParams.delete("token");
+            router.push(`/?${urlSearchParams.toString()}`);
+          }}
         >
           <Select.Option value="">All</Select.Option>
           {supportedTokens.map((token, i) => (
@@ -359,14 +359,19 @@ export default function Home() {
         <Select
           defaultValue=""
           style={{ width: 120 }}
-          value={searchFilter?.type || ""}
-          onChange={(val) => setSearchFilter({ ...searchFilter, type: val })}
+          value={typeQueryParam}
+          onChange={(val) => {
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            if (val) urlSearchParams.set("type", val);
+            else urlSearchParams.delete("type");
+            router.push(`/?${urlSearchParams.toString()}`);
+          }}
         >
           <Select.Option value="">All</Select.Option>
-          <Select.Option value="INCOMING" disabled={!account}>
+          <Select.Option value="INCOMING" disabled={!viewAsQueryParam}>
             <Tag color="green">INCOMING</Tag>
           </Select.Option>
-          <Select.Option value="OUTGOING" disabled={!account}>
+          <Select.Option value="OUTGOING" disabled={!viewAsQueryParam}>
             <Tag color="blue">OUTGOING</Tag>
           </Select.Option>
           <Select.Option value="ACTIVE">
@@ -378,15 +383,16 @@ export default function Home() {
         </Select>
         <Input.Search
           placeholder="Search by address"
-          value={searchFilter?.searchInput || ""}
+          value={searchQueryParam}
           enterButton
           allowClear
           onSearch={getStreams}
-          onChange={(e) =>
-            setSearchFilter({
-              ...searchFilter,
-              searchInput: e.target.value
-            })
+          onChange={(e) => {
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            if (e.target.value) urlSearchParams.set("q", e.target.value);
+            else urlSearchParams.delete("q");
+            router.push(`/?${urlSearchParams.toString()}`);
+          }
           }
         />
         <Button
@@ -396,23 +402,6 @@ export default function Home() {
         >
           <SyncOutlined />
         </Button>
-        {/* switch to show all or by me */}
-        <label>Owned By:</label>
-        <Select
-          defaultValue="all"
-          style={{ width: 130 }}
-          value={showMyStreams ? "me" : "all"}
-          onChange={(val) => setShowMyStreams(val === "me")}
-        >
-          <Select.Option value="all">All</Select.Option>
-          <Select.Option
-            value="me"
-            disabled={!account}
-            title={account ? "" : "Connect your wallet to view"}
-          >
-            Me
-          </Select.Option>
-        </Select>
       </Space>
       <Table
         className="table_grid"

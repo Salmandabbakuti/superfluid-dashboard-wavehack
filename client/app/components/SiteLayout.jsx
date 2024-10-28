@@ -1,12 +1,18 @@
 "use client";
-import { Divider, Layout } from "antd";
-import { ConnectWallet } from "@thirdweb-dev/react";
+import { Divider, Layout, Input } from "antd";
+import { ArrowRightOutlined, UserOutlined } from "@ant-design/icons";
+import { useRouter, useSearchParams } from "next/navigation";
 import ActivityDrawer from "./ActivityDrawer";
+import { ellipsisAddress } from "../utils";
 import "antd/dist/reset.css";
 
 const { Header, Footer, Content } = Layout;
 
 export default function SiteLayout({ children }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewAsQueryParam = searchParams.get("view_as") || "";
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Header
@@ -32,14 +38,24 @@ export default function SiteLayout({ children }) {
           Superfluid Dashboard
         </h3>
         <div style={{ display: "flex", alignItems: "center" }}>
-          <ConnectWallet
-            style={{ marginRight: "10px" }}
-            theme={"light"} // light | dark
-            switchToActiveChain={true}
-            hideTestnetFaucet={false}
-            modalSize={"compact"} // compact | wide
-            termsOfServiceUrl="https://example.com/terms"
-            privacyPolicyUrl="https://example.com/privacy"
+          {/* view as input box with arrow */}
+          <label style={{ color: "white", marginRight: 12 }}>View as: </label>
+          <Input
+            placeholder="Enter address e.g. 0x1234..."
+            value={viewAsQueryParam ? ellipsisAddress(viewAsQueryParam) : ""}
+            allowClear
+            prefix={<UserOutlined />}
+            style={{ width: 200 }}
+            onChange={(e) => {
+              console.log(e.target.value);
+              const urlSearchParams = new URLSearchParams(
+                window.location.search
+              );
+              if (e.target.value)
+                urlSearchParams.set("view_as", e.target.value);
+              else urlSearchParams.delete("view_as");
+              router.push(`/?${urlSearchParams.toString()}`);
+            }}
           />
           <ActivityDrawer />
         </div>

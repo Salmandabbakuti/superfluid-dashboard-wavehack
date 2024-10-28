@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { Drawer, Button, message, Avatar, List, Select } from "antd";
-import { useAddress } from "@thirdweb-dev/react";
+import { useState, useEffect, useCallback } from "react";
+import { Drawer, Button, message, Avatar, List, Input } from "antd";
+import { useSearchParams } from "next/navigation";
 import {
   HistoryOutlined,
   ExportOutlined,
-  SyncOutlined
+  SyncOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -42,17 +43,17 @@ dayjs.updateLocale("en", {
 export default function ActivityDrawer() {
   const [activities, setActivities] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [showMyActivities, setShowMyActivities] = useState(false);
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const viewAsQueryParam = searchParams.get("view_as") || "";
 
-  const account = useAddress()?.toLowerCase();
-
-  const getActivities = async () => {
+  const getActivities = useCallback(async () => {
     console.log("Getting activities...");
-    console.log("account: ", account);
     setLoading(true);
-    // if showMyActivities is true, filter by account, it would also show all activities if account is not connected
-    const accountFilter = showMyActivities ? account : undefined;
+    // if view as set, filter by account, it would also show all activities if account is not connected
+    const accountFilter = viewAsQueryParam
+      ? viewAsQueryParam?.toLowerCase()
+      : undefined;
     client
       .request(STREAM_ACTIVITIES_QUERY, {
         skip: 0,
@@ -75,11 +76,11 @@ export default function ActivityDrawer() {
         console.error("Error fetching activities: ", error);
         setLoading(false);
       });
-  };
+  }, [viewAsQueryParam]);
 
   useEffect(() => {
     getActivities();
-  }, [account, showMyActivities]);
+  }, [getActivities]);
 
   return (
     <>
@@ -99,16 +100,13 @@ export default function ActivityDrawer() {
       >
         {/* add drop down to filter All or Owned by Me */}
         <label style={{ marginRight: 10 }}>Activity by: </label>
-        <Select
-          defaultValue={false}
-          style={{ width: 120, right: 0, marginBottom: 10 }}
-          onChange={(val) => setShowMyActivities(val)}
-        >
-          <Select.Option value={false}>All</Select.Option>
-          <Select.Option value={true} disabled={!account}>
-            Me
-          </Select.Option>
-        </Select>
+        <Input
+          readOnly
+          prefix={<UserOutlined />}
+          placeholder="0x1234...5678"
+          value={viewAsQueryParam ? ellipsisAddress(viewAsQueryParam) : "All"}
+          style={{ width: 200 }}
+        />
         <Button
           type="primary"
           shape="circle"
